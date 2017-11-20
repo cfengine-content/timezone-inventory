@@ -1,12 +1,6 @@
-bundle agent timezone {
-
-  files:
-    any::
-      "/etc/localtime"
-        comment                   => "Set the right timezone (GMT), for once and forever.",
-        action                    => immediate,
-        move_obstructions         => "true",
-        link_from                 => ln_s("/usr/share/zoneinfo/GMT");
+bundle agent timezone_inventory
+# @brief Inventory system timezone
+{
 
   vars:
       "timezone"
