@@ -1,0 +1,21 @@
+bundle agent timezone {
+
+  files:
+    any::
+      "/etc/localtime"
+        comment                   => "Set the right timezone (GMT), for once and forever.",
+        action                    => immediate,
+        move_obstructions         => "true",
+        link_from                 => ln_s("/usr/share/zoneinfo/GMT");
+
+  vars:
+      "timezone"
+        string => execresult("/bin/date +%Z", noshell),
+        meta => { "inventory", "attribute_name=Timezone" };
+
+  reports:
+    DEBUG|DEBUG_timezone::
+      "DEBUG $(this.bundle)";
+      "$(const.t)Added '$(timezone)' to 'Timezone' inventory";
+
+}

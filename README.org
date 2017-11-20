@@ -1,0 +1,132 @@
+#+Title: Timezone Inventory
+
+This policy inventories the timezone configured on a host.
+
+* Installation :ATTACH:
+:PROPERTIES:
+:ID:       9be2831e-84fc-4223-86e0-8d0ec965ceae
+:Attachments: Timezone-Pie-Chart-percent-before_2017-11-20_14-47-20.png
+:END:
+
+#+DOWNLOADED: file:///home/nickanderson/CFEngine/policy/cfengine-content/timezone-inventory/Timezone-Pie-Chart-percent-before.png @ 2017-11-20 14:47:20
+#+attr_org: :width 600
+#+attr_html: :width 600 
+[[file:data/9b/e2831e-84fc-4223-86e0-8d0ec965ceae/Timezone-Pie-Chart-percent-before_2017-11-20_14-47-20.png]]
+
+1. Clone the repository
+
+   #+BEGIN_SRC shell 
+     git clone https://github.com/cfengine-content/timezone-inventory
+   #+END_SRC
+   
+2. Change into the repository and run ~make install~
+
+   #+BEGIN_SRC shell 
+     cd timezone-inventory
+     make install
+   #+END_SRC
+ 
+4. Ensure =main.cf= is included in your policy inputs (ref [[./def.json]] )
+
+5. Ensure =timezone_inventory= is added to the bundlesequence. (ref [[./def.json]] )
+
+* Reporting
+
+** Timezone Summary :ATTACH:
+:PROPERTIES:
+:ID:       990ff219-0a77-48cb-b148-e9c320f48d70
+:Attachments: Timezone-Summary-before_2017-11-20_14-42-34.png
+:END:
+
+#+DOWNLOADED: file:///home/nickanderson/CFEngine/policy/cfengine-content/timezone-inventory/Timezone-Summary-before.png @ 2017-11-20 14:42:34
+#+attr_org: :width 600
+#+attr_html: :width 600 
+[[file:data/99/0ff219-0a77-48cb-b148-e9c320f48d70/Timezone-Summary-before_2017-11-20_14-42-34.png]]
+
+Copy =[[./templates/timezone-summary.sql][timezone-summary.sql]]= replacing =<PACKAGE>= with the package you want to
+report on. Add as Custom Report in Mission Portal.
+
+#+BEGIN_SRC sql :tangle ./templates/timezone-summary.sql
+  -- Author: Mike Weilgart
+  -- Date: 23 April 2017
+  -- Purpose: Show timezone for each host.
+  -- This query result can be accomplished easily from the Inventory UI,
+  -- but is shown as a custom query for illustration.
+
+  WITH tz AS (
+    SELECT
+      hostkey,
+      variablevalue AS timezone
+    FROM variables
+    WHERE comp = 'default.timezone.timezone'
+  )
+  SELECT
+    hostname AS "Host Name",
+    ipaddress AS "IP Address",
+    timezone AS "Time Zone"
+  FROM
+    hosts
+    LEFT JOIN tz USING (hostkey)
+  ORDER BY ipaddress::inet
+#+END_SRC
+
+** Host details with timezone :ATTACH:
+:PROPERTIES:
+:ID:       c736c412-27d1-4973-bd62-e196bc4d43da
+:Attachments: Timezone-Details-before_2017-11-20_14-42-00.png
+:END:
+
+#+DOWNLOADED: file:///home/nickanderson/CFEngine/policy/cfengine-content/timezone-inventory/Timezone-Details-before.png @ 2017-11-20 14:42:00
+#+attr_org: :width 600
+#+attr_html: :width 600 
+[[file:data/c7/36c412-27d1-4973-bd62-e196bc4d43da/Timezone-Details-before_2017-11-20_14-42-00.png]]
+
+Copy =[[./templates/timezone-details.sql][timezone-details.sql]]=
+replacing =<PACKAGE>= with the package
+you want to report on. Add as Custom Report in Mission Portal.
+
+#+BEGIN_SRC sql :tangle ./templates/timezone-details.sql
+  -- Author: Mike Weilgart
+  -- Date: 23 April 2017
+  -- Purpose: Show timezone for each host.
+  -- This query result can be accomplished easily from the Inventory UI,
+  -- but is shown as a custom query for illustration.
+
+  WITH tz AS (
+    SELECT
+      hostkey,
+      variablevalue AS timezone
+    FROM variables
+    WHERE comp = 'default.timezone.timezone'
+  )
+  SELECT
+    hostname AS "Host Name",
+    ipaddress AS "IP Address",
+    timezone AS "Time Zone"
+  FROM
+    hosts
+    LEFT JOIN tz USING (hostkey)
+  ORDER BY ipaddress::inet
+#+END_SRC
+
+* Example timezone enforcement
+
+#+BEGIN_SRC cfengine3
+  bundle agent timezone_configured
+  # @brief Enforce that the system timezone is configured for GMT
+  {
+
+    files:
+
+      !windows::
+
+        "/etc/localtime"
+          comment                   => "Set the right timezone (GMT)",
+          action                    => immediate,
+          move_obstructions         => "true",
+          link_from                 => ln_s("/usr/share/zoneinfo/GMT");
+  }
+
+#+END_SRC
+
+
